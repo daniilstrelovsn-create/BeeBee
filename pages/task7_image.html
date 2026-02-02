@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тип #7. Кодирование изображений.</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .controls {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .slider-container {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="range"] {
+            width: 100%;
+            max-width: 400px;
+        }
+        .value-display {
+            display: inline-block;
+            margin-left: 10px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .image-editor {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+        }
+        .pixel-grid-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Центрируем по горизонтали */
+        }
+        .pixel-grid-container h3 {
+            width: 100%;
+            text-align: center; /* Центрируем заголовок */
+            margin-bottom: 15px;
+        }
+        .pixel-grid {
+            display: inline-block;
+            border: 2px solid #333;
+            line-height: 0;
+            margin: 0 auto; /* Дополнительное центрирование */
+        }
+        .pixel {
+            width: 20px;
+            height: 20px;
+            border: 1px solid #ddd;
+            display: inline-block;
+            cursor: pointer;
+            background-color: #ffffff;
+        }
+        .pixel:hover {
+            border: 1px solid #007bff;
+        }
+        .palette-container {
+            width: 300px; /* Увеличена ширина контейнера палитры */
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        .palette-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .color-palette {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 4 цвета в строке */
+            gap: 8px; /* Увеличен промежуток между цветами */
+        }
+        .color-item {
+            width: 60px; /* Увеличена ширина элементов */
+            height: 40px; /* Увеличена высота элементов */
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px; /* Возвращен нормальный размер шрифта */
+            font-weight: bold;
+            position: relative;
+        }
+        .color-item.selected {
+            border-color: #007bff;
+            border-width: 3px;
+        }
+        .color-code {
+            color: white;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
+            font-family: 'Courier New', monospace;
+        }
+        .info-panel {
+            background-color: #e9ecef;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .volume-info {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #d4edda;
+            border-radius: 5px;
+            border-left: 4px solid #28a745;
+        }
+        .volume-item {
+            margin: 8px 0;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .memory-visualization {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+        }
+        .memory-grid-container {
+            margin: 15px 0;
+            overflow-x: auto;
+            max-width: 100%;
+            display: flex;
+            justify-content: center; /* Центрируем таблицу памяти */
+        }
+        .memory-grid {
+            display: block;
+            border: 2px solid #333;
+            line-height: 0;
+            width: max-content;
+        }
+        .memory-cell {
+            width: 20px;
+            height: 20px;
+            border: 1px solid #ccc;
+            display: inline-block;
+            text-align: center;
+            line-height: 20px;
+            font-size: 10px;
+            font-weight: bold;
+            background-color: #f8f9fa;
+        }
+        .memory-cell.one {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .memory-cell.zero {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        .memory-info {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+            text-align: center; /* Центрируем текст информации */
+        }
+        .table-info {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #333;
+            font-weight: bold;
+            text-align: center; /* Центрируем информацию о размере таблицы */
+        }
+        .image-formats {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+        }
+        .formats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .formats-table th {
+            background-color: #007bff;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        .formats-table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        .formats-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .formats-table tr:hover {
+            background-color: #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Тип #7. Кодирование изображений.</h1>
+        
+        <div class="controls">
+            <div class="slider-container">
+                <label for="widthSlider">
+                    Количество пикселей по горизонтали (X): 
+                    <span id="widthValue" class="value-display">16 пикселей</span>
+                </label>
+                <input type="range" id="widthSlider" min="1" max="26" step="1" value="16">
+            </div>
+            
+            <div class="slider-container">
+                <label for="heightSlider">
+                    Количество пикселей по вертикали (Y): 
+                    <span id="heightValue" class="value-display">16 пикселей</span>
+                </label>
+                <input type="range" id="heightSlider" min="1" max="42" step="1" value="16">
+            </div>
+
+            <div class="slider-container">
+                <label for="bitsSlider">
+                    Количество бит (i): 
+                    <span id="bitsValue" class="value-display">4 бит</span>
+                </label>
+                <input type="range" id="bitsSlider" min="1" max="6" step="1" value="4">
+            </div>
+        </div>
+
+        <div class="image-editor">
+            <div class="pixel-grid-container">
+                <h3>Пиксельное поле:</h3>
+                <div id="pixelGrid" class="pixel-grid"></div>
+            </div>
+            
+            <div class="palette-container">
+                <div class="palette-title">Палитра (N = 2<sup>i</sup> = <span id="colorsCount">16</span> цветов)</div>
+                <div id="colorPalette" class="color-palette"></div>
+            </div>
+        </div>
+
+        <div class="info-panel">
+            <h3>Расчетные параметры:</h3>
+            <p>Количество цветов (N = 2<sup>i</sup>): <strong id="depthValue">16</strong> цветов</p>
+            <p>Размер изображения: <strong id="imageSize">16 × 16</strong> пикселей</p>
+            
+            <div class="volume-info">
+                <h4>Информационный объём изображения (I = X × Y × i):</h4>
+                <div class="volume-item" id="volumeBits">1024 бит</div>
+                <div class="volume-item" id="volumeKB">0.13 КБайт</div>
+                <div class="volume-item" id="volumeMB">0.0001 МБайт</div>
+            </div>
+        </div>
+
+        <div class="memory-visualization">
+            <h3>Визуальное представление хранения информации:</h3>
+            <div class="table-info">
+                Размер таблицы: R = X × Y × i = <span id="memorySize">1024</span> бит
+            </div>
+            <div class="memory-grid-container">
+                <div id="memoryGrid" class="memory-grid"></div>
+            </div>
+            <div class="memory-info">
+                <p>Каждая ячейка представляет 1 бит. Зеленые ячейки - 1, красные ячейки - 0.</p>
+                <p>Отображаются двоичные представления цветов пикселей изображения (построчно слева направо, сверху вниз).</p>
+            </div>
+        </div>
+
+        <div class="image-formats">
+            <h3>Часто используемые форматы файлов изображений:</h3>
+            <table class="formats-table">
+                <thead>
+                    <tr>
+                        <th>Название</th>
+                        <th>Расширение</th>
+                        <th>Тип сжатия</th>
+                        <th>Глубина цвета</th>
+                        <th>Где используется</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>BMP</td>
+                        <td>.bmp</td>
+                        <td>Без сжатия</td>
+                        <td>1, 4, 8, 16, 24, 32 бит</td>
+                        <td>Windows, иконки, несжатые изображения</td>
+                    </tr>
+                    <tr>
+                        <td>JPEG</td>
+                        <td>.jpg, .jpeg</td>
+                        <td>С потерями (DCT)</td>
+                        <td>24 бит (16.7 млн цветов)</td>
+                        <td>Фотографии, веб-изображения</td>
+                    </tr>
+                    <tr>
+                        <td>PNG</td>
+                        <td>.png</td>
+                        <td>Без потерь (DEFLATE)</td>
+                        <td>1-64 бит</td>
+                        <td>Веб-графика, прозрачность</td>
+                    </tr>
+                    <tr>
+                        <td>GIF</td>
+                        <td>.gif</td>
+                        <td>Без потерь (LZW)</td>
+                        <td>8 бит (256 цветов)</td>
+                        <td>Анимация, простые изображения</td>
+                    </tr>
+                    <tr>
+                        <td>TIFF</td>
+                        <td>.tiff, .tif</td>
+                        <td>Без потерь/с потерями</td>
+                        <td>1-64 бит</td>
+                        <td>Полиграфия, сканирование</td>
+                    </tr>
+                    <tr>
+                        <td>WebP</td>
+                        <td>.webp</td>
+                        <td>С потерями/без потерь</td>
+                        <td>24-32 бит</td>
+                        <td>Веб, современные браузеры</td>
+                    </tr>
+                    <tr>
+                        <td>SVG</td>
+                        <td>.svg</td>
+                        <td>Векторный (XML)</td>
+                        <td>Не ограничено</td>
+                        <td>Логотипы, иконки, масштабируемая графика</td>
+                    </tr>
+                    <tr>
+                        <td>ICO</td>
+                        <td>.ico</td>
+                        <td>Без сжатия</td>
+                        <td>1-32 бит</td>
+                        <td>Иконки Windows, фавиконки</td>
+                    </tr>
+                    <tr>
+                        <td>RAW</td>
+                        <td>.raw, .cr2, .nef</td>
+                        <td>Без сжатия</td>
+                        <td>12-16 бит на канал</td>
+                        <td>Фотография, профессиональная обработка</td>
+                    </tr>
+                    <tr>
+                        <td>HEIC</td>
+                        <td>.heic, .heif</td>
+                        <td>С потерями (HEVC)</td>
+                        <td>8-16 бит на канал</td>
+                        <td>Фото на iPhone, современные устройства</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Элементы управления
+            const widthSlider = document.getElementById('widthSlider');
+            const heightSlider = document.getElementById('heightSlider');
+            const bitsSlider = document.getElementById('bitsSlider');
+            const widthValue = document.getElementById('widthValue');
+            const heightValue = document.getElementById('heightValue');
+            const bitsValue = document.getElementById('bitsValue');
+            const depthValue = document.getElementById('depthValue');
+            const imageSize = document.getElementById('imageSize');
+            const colorsCount = document.getElementById('colorsCount');
+            const volumeBits = document.getElementById('volumeBits');
+            const volumeKB = document.getElementById('volumeKB');
+            const volumeMB = document.getElementById('volumeMB');
+            const memorySize = document.getElementById('memorySize');
+            const pixelGrid = document.getElementById('pixelGrid');
+            const colorPalette = document.getElementById('colorPalette');
+            const memoryGrid = document.getElementById('memoryGrid');
+
+            let selectedColor = '#000000';
+            let currentColors = [];
+            let currentBits = 4;
+
+            // Функция для генерации палитры цветов
+            function generateColorPalette(bits) {
+                currentBits = bits;
+                const colorCount = Math.pow(2, bits);
+                colorsCount.textContent = colorCount;
+                depthValue.textContent = colorCount + ' цветов';
+                
+                const colors = [];
+                
+                // Генерируем цвета от черного к белому через спектр
+                for (let i = 0; i < colorCount; i++) {
+                    if (colorCount === 1) {
+                        colors.push({color: '#000000', code: '0'});
+                    } else if (colorCount === 2) {
+                        colors.push(
+                            i === 0 ? {color: '#000000', code: '0'} : {color: '#FFFFFF', code: '1'}
+                        );
+                    } else {
+                        const hue = (i * 360) / colorCount;
+                        const saturation = 100;
+                        const lightness = 50 + (i * 25) / colorCount;
+                        const color = hslToHex(hue, saturation, lightness);
+                        const code = i.toString(2).padStart(bits, '0');
+                        colors.push({color: color, code: code});
+                    }
+                }
+                
+                currentColors = colors;
+                renderColorPalette(colors);
+                selectedColor = colors[0].color;
+                updateSelectedColor();
+                return colors;
+            }
+
+            // Функция преобразования HSL в HEX
+            function hslToHex(h, s, l) {
+                h /= 360;
+                s /= 100;
+                l /= 100;
+                let r, g, b;
+                if (s === 0) {
+                    r = g = b = l;
+                } else {
+                    const hue2rgb = (p, q, t) => {
+                        if (t < 0) t += 1;
+                        if (t > 1) t -= 1;
+                        if (t < 1/6) return p + (q - p) * 6 * t;
+                        if (t < 1/2) return q;
+                        if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                        return p;
+                    };
+                    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                    const p = 2 * l - q;
+                    r = hue2rgb(p, q, h + 1/3);
+                    g = hue2rgb(p, q, h);
+                    b = hue2rgb(p, q, h - 1/3);
+                }
+                const toHex = x => {
+                    const hex = Math.round(x * 255).toString(16);
+                    return hex.length === 1 ? '0' + hex : hex;
+                };
+                return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+            }
+
+            // Функция отрисовки палитры
+            function renderColorPalette(colors) {
+                colorPalette.innerHTML = '';
+                colors.forEach((colorObj, index) => {
+                    const colorElement = document.createElement('div');
+                    colorElement.className = 'color-item';
+                    colorElement.style.backgroundColor = colorObj.color;
+                    colorElement.dataset.color = colorObj.color;
+                    colorElement.dataset.code = colorObj.code;
+                    
+                    const codeElement = document.createElement('span');
+                    codeElement.className = 'color-code';
+                    codeElement.textContent = colorObj.code;
+                    colorElement.appendChild(codeElement);
+                    
+                    colorElement.addEventListener('click', () => {
+                        selectedColor = colorObj.color;
+                        updateSelectedColor();
+                    });
+                    colorPalette.appendChild(colorElement);
+                });
+                updateSelectedColor();
+            }
+
+            // Функция обновления выбранного цвета
+            function updateSelectedColor() {
+                document.querySelectorAll('.color-item').forEach(item => {
+                    item.classList.remove('selected');
+                    if (item.dataset.color === selectedColor) {
+                        item.classList.add('selected');
+                    }
+                });
+            }
+
+            // Функция создания пиксельной сетки
+            function createPixelGrid(width, height) {
+                pixelGrid.innerHTML = '';
+                imageSize.textContent = `${width} × ${height}`;
+                
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        const pixel = document.createElement('div');
+                        pixel.className = 'pixel';
+                        pixel.dataset.x = x;
+                        pixel.dataset.y = y;
+                        pixel.style.backgroundColor = '#FFFFFF'; // Белый по умолчанию
+                        
+                        pixel.addEventListener('click', () => {
+                            pixel.style.backgroundColor = selectedColor;
+                            updateMemoryVisualization();
+                        });
+                        
+                        pixel.addEventListener('mousedown', () => {
+                            pixel.style.backgroundColor = selectedColor;
+                            updateMemoryVisualization();
+                            let isPainting = true;
+                            
+                            const paint = (e) => {
+                                if (!isPainting) return;
+                                const target = e.target;
+                                if (target.classList.contains('pixel')) {
+                                    target.style.backgroundColor = selectedColor;
+                                    updateMemoryVisualization();
+                                }
+                            };
+                            
+                            const stopPainting = () => {
+                                isPainting = false;
+                                document.removeEventListener('mousemove', paint);
+                                document.removeEventListener('mouseup', stopPainting);
+                            };
+                            
+                            document.addEventListener('mousemove', paint);
+                            document.addEventListener('mouseup', stopPainting);
+                        });
+                        pixelGrid.appendChild(pixel);
+                    }
+                    pixelGrid.appendChild(document.createElement('br'));
+                }
+                updateMemoryVisualization();
+            }
+
+            // Функция принудительного обновления цветов пикселей
+            function resetPixelColors() {
+                const pixels = pixelGrid.querySelectorAll('.pixel');
+                pixels.forEach(pixel => {
+                    pixel.style.backgroundColor = currentColors[0].color;
+                });
+                updateMemoryVisualization();
+            }
+
+            // Функция получения двоичного кода для цвета
+            function getColorCode(color) {
+                // Ищем точное совпадение цвета
+                const colorObj = currentColors.find(c => c.color.toLowerCase() === color.toLowerCase());
+                if (colorObj) {
+                    return colorObj.code;
+                }
+                
+                // Если точного совпадения нет, ищем ближайший цвет
+                const rgb = hexToRgb(color);
+                if (!rgb) return '0'.repeat(currentBits);
+                
+                let minDistance = Infinity;
+                let closestCode = '0'.repeat(currentBits);
+                
+                currentColors.forEach(colorObj => {
+                    const paletteRgb = hexToRgb(colorObj.color);
+                    if (paletteRgb) {
+                        const distance = colorDistance(rgb, paletteRgb);
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            closestCode = colorObj.code;
+                        }
+                    }
+                });
+                
+                return closestCode;
+            }
+
+            // Функция преобразования HEX в RGB
+            function hexToRgb(hex) {
+                // Убираем # если есть
+                hex = hex.replace('#', '');
+                
+                // Преобразуем 3-значный HEX в 6-значный
+                if (hex.length === 3) {
+                    hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+                }
+                
+                if (hex.length !== 6) return null;
+                
+                const r = parseInt(hex.substring(0, 2), 16);
+                const g = parseInt(hex.substring(2, 4), 16);
+                const b = parseInt(hex.substring(4, 6), 16);
+                
+                return { r, g, b };
+            }
+
+            // Функция вычисления расстояния между цветами
+            function colorDistance(rgb1, rgb2) {
+                const dr = rgb1.r - rgb2.r;
+                const dg = rgb1.g - rgb2.g;
+                const db = rgb1.b - rgb2.b;
+                return Math.sqrt(dr * dr + dg * dg + db * db);
+            }
+
+            // Функция обновления визуализации памяти
+            function updateMemoryVisualization() {
+                const width = parseInt(widthSlider.value);
+                const height = parseInt(heightSlider.value);
+                const bits = currentBits;
+                const totalCells = width * height * bits;
+                memorySize.textContent = totalCells;
+                
+                let html = '';
+                let cellIndex = 0;
+                
+                // Собираем двоичные коды всех пикселей построчно
+                const binaryValues = [];
+                const pixels = pixelGrid.querySelectorAll('.pixel');
+                
+                // Проходим по всем пикселям построчно (сверху вниз, слева направо)
+                pixels.forEach(pixel => {
+                    let color = pixel.style.backgroundColor;
+                    
+                    // Если цвет в формате rgb(), преобразуем в hex
+                    if (color.startsWith('rgb')) {
+                        color = rgbToHex(color);
+                    }
+                    
+                    // Получаем двоичный код для этого цвета
+                    const code = getColorCode(color);
+                    
+                    // Добавляем биты этого пикселя в общий массив
+                    for (let j = 0; j < code.length; j++) {
+                        binaryValues.push(code[j]);
+                    }
+                });
+                
+                // Создаем таблицу памяти (40 столбцов)
+                const cellsPerRow = 40;
+                const rows = Math.ceil(totalCells / cellsPerRow);
+                
+                for (let row = 0; row < rows; row++) {
+                    for (let col = 0; col < cellsPerRow; col++) {
+                        if (cellIndex < totalCells) {
+                            if (cellIndex < binaryValues.length) {
+                                const bit = binaryValues[cellIndex];
+                                const cellClass = bit === '1' ? 'one' : 'zero';
+                                html += `<div class="memory-cell ${cellClass}">${bit}</div>`;
+                            } else {
+                                // Заполняем оставшиеся ячейки нулями
+                                html += `<div class="memory-cell zero">0</div>`;
+                            }
+                            cellIndex++;
+                        }
+                    }
+                    html += '<br>';
+                }
+                
+                memoryGrid.innerHTML = html;
+            }
+
+            // Функция преобразования RGB в HEX
+            function rgbToHex(rgb) {
+                // Извлекаем числа из строки rgb(r, g, b)
+                const matches = rgb.match(/\d+/g);
+                if (!matches || matches.length < 3) return '#000000';
+                
+                const r = parseInt(matches[0]);
+                const g = parseInt(matches[1]);
+                const b = parseInt(matches[2]);
+                
+                return '#' + 
+                    (r.toString(16).padStart(2, '0')) + 
+                    (g.toString(16).padStart(2, '0')) + 
+                    (b.toString(16).padStart(2, '0'));
+            }
+
+            // Функция расчета информационного объема
+            function calculateVolume(width, height, bits) {
+                const bitsVolume = width * height * bits;
+                const kbVolume = bitsVolume / (8 * 1024);
+                const mbVolume = kbVolume / 1024;
+                
+                return {
+                    bits: bitsVolume,
+                    kb: kbVolume,
+                    mb: mbVolume
+                };
+            }
+
+            // Функция форматирования чисел
+            function formatNumber(num) {
+                return Intl.NumberFormat('ru-RU').format(num);
+            }
+
+            // Функция обновления интерфейса
+            function updateInterface() {
+                const width = parseInt(widthSlider.value);
+                const height = parseInt(heightSlider.value);
+                const bits = parseInt(bitsSlider.value);
+                
+                // Обновление отображаемых значений
+                widthValue.textContent = width + ' пикселей';
+                heightValue.textContent = height + ' пикселей';
+                bitsValue.textContent = bits + ' бит';
+                
+                // Расчет информационного объема
+                const volume = calculateVolume(width, height, bits);
+                volumeBits.textContent = formatNumber(volume.bits) + ' бит';
+                volumeKB.textContent = volume.kb.toFixed(2) + ' КБайт';
+                volumeMB.textContent = volume.mb.toFixed(4) + ' МБайт';
+                
+                // Обновление палитры и сетки
+                generateColorPalette(bits);
+                createPixelGrid(width, height);
+                
+                // Принудительное обновление цветов пикселей после создания палитры
+                setTimeout(resetPixelColors, 0);
+            }
+
+            // Обработчики событий
+            widthSlider.addEventListener('input', updateInterface);
+            heightSlider.addEventListener('input', updateInterface);
+            bitsSlider.addEventListener('input', updateInterface);
+
+            // Инициализация
+            updateInterface();
+        });
+    </script>
+</body>
+</html>

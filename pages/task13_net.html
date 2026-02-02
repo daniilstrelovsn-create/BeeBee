@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тип #13. IP адресация</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            line-height: 1.6;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: left;
+            margin-bottom: 30px;
+            margin-left: 0;
+        }
+        
+        /* Стили для блока расчета сети */
+        .network-calc {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+            text-align: left;
+        }
+        .network-calc h3 {
+            color: #2c3e50;
+            margin-top: 0;
+            text-align: left;
+        }
+        .ip-params {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .param-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .param-row:hover {
+            background-color: #f8f9fa;
+        }
+        .param-row.selected {
+            background-color: #e8f4fd;
+            border-left: 4px solid #3498db;
+        }
+        .param-row.required {
+            background-color: #fff8e1;
+            border-left: 4px solid #f39c12;
+        }
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            min-width: 30px;
+        }
+        .checkbox-container input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .param-label {
+            min-width: 120px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .required-label::after {
+            content: " *";
+            color: #e74c3c;
+        }
+        .ip-field {
+            display: flex;
+            align-items: center;
+        }
+        .ip-field input {
+            width: 50px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+            margin: 0 5px;
+        }
+        .ip-field input:read-only {
+            background-color: #f8f9fa;
+            color: #6c757d;
+        }
+        .ip-field span {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .calculate-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: auto;
+            min-width: 200px;
+            transition: background-color 0.3s;
+            white-space: nowrap;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .calculate-btn:hover {
+            background-color: #2980b9;
+        }
+        .calculate-btn:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+            display: none;
+        }
+        .error {
+            color: #e74c3c;
+            margin-top: 10px;
+            display: none;
+        }
+        .info {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .selected-count {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #3498db;
+        }
+        .binary-representation {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #2c3e50;
+            color: white;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+        }
+        .binary-row {
+            margin: 8px 0;
+            display: flex;
+            align-items: center;
+        }
+        .binary-label {
+            min-width: 120px;
+            font-weight: bold;
+            color: #3498db;
+        }
+        .binary-value {
+            display: flex;
+            gap: 5px;
+        }
+        .binary-octet {
+            padding: 2px 5px;
+            background-color: #34495e;
+            border-radius: 3px;
+            margin: 0 2px;
+        }
+        .network-info {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #e8f4fd;
+            border-radius: 5px;
+            border-left: 4px solid #2ecc71;
+        }
+        
+        /* Стили для блока расчета подсетей */
+        .subnet-calc {
+            margin-top: 40px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+        }
+        .subnet-step {
+            margin-bottom: 25px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+        .subnet-step h4 {
+            color: #2c3e50;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        .subnet-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+        .subnet-table th {
+            background-color: #2c3e50;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #5d6d7e;
+        }
+        .subnet-table td {
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+        }
+        .subnet-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .subnet-table tr:hover {
+            background-color: #e8f4fd;
+        }
+        .calculation-example {
+            background-color: #2c3e50;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+        }
+        .note {
+            background-color: #fff8e1;
+            padding: 10px 15px;
+            border-left: 4px solid #f39c12;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Тип #13. IP адресация</h1>
+
+        <div class="network-calc">
+            <h3>Расчёт сети #Десятичное представление</h3>
+            <p>Введите IP адрес и выберите один дополнительный параметр для расчета.</p>
+            <div class="info">IP адрес обязателен для ввода. Выберите один из трех дополнительных параметров</div>
+            <div class="info">Замечание Платона: если IP адрес сети и IP адрес устройсва достаточно близки, то однозначно маску определить невозможно. В задачах ЕГЭ <strong>ВСЕГДА</strong> просят найти минимально возможную маску (единицы в маске должны быть максимально слева)</div>
+            
+            <div class="ip-params">
+                <div class="param-row required" id="ipRow">
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="ipCheckbox" checked disabled>
+                    </div>
+                    <div class="param-label required-label">IP address:</div>
+                    <div class="ip-field">
+                        <input type="number" min="0" max="255" id="ip1" >
+                        <span>.</span>
+                        <input type="number" min="0" max="255" id="ip2" >
+                        <span>.</span>
+                        <input type="number" min="0" max="255" id="ip3" >
+                        <span>.</span>
+                        <input type="number" min="0" max="255" id="ip4" >
+                    </div>
+                </div>
+                
+                <div class="param-row" id="maskRow">
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="maskCheckbox">
+                    </div>
+                    <div class="param-label">Net mask:</div>
+                    <div class="ip-field">
+                        <input type="number" min="0" max="255" id="mask1" readonly>
+                        <span>.</span>
+                        <input type="number" min="0" max="255" id="mask2" readonly>
+                        <span>.</span>
+                        <input type="number" min="0" max="255" id="mask3" readonly>
+                        <span>.</span>
+                        <input type="number" min="0" max="255" id="mask4" readonly>
+                    </div>
+                </div>
+                
+                <div class="param-row" id="netRow">
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="netCheckbox">
+                    </div>
+                    <div class="param-label">Net address:</div>
+                    <div class="ip-field">
+                        <input type="number" min="0" max="255" id="net1" readonly>
+                        <span>.</span>
+                        <input type="number" min="0" max="255" id="net2" readonly>
+                        <span>.</span>
+                        <input type="number" min="0" max="255" id="net3" readonly>
+                        <span>.</span>
+                        <input type="number" min="0" max="255" id="net4" readonly>
+                    </div>
+                </div>
+                
+                <div class="param-row" id="broadcastRow">
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="broadcastCheckbox">
+                    </div>
+                    <div class="param-label">Broadcast:</div>
+                    <div class="ip-field">
+                        <input type="number" min="0" max="255" id="broadcast1" readonly>
+                        <span>.</span>
+                        <input type="number" min="0" max="255" id="broadcast2" readonly>
+                        <span>.</span>
+                        <input type="number" min="0" max="255" id="broadcast3" readonly>
+                        <span>.</span>
+                        <input type="number" min="0" max="255" id="broadcast4" readonly>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="selected-count" id="selectedCount">Выбран IP адрес. Выберите один дополнительный параметр</div>
+            
+            <button class="calculate-btn" id="calculateBtn" disabled>Рассчитать сеть</button>
+            
+            <div class="error" id="errorMsg">Ошибка: необходимо заполнить IP адрес и выбрать один дополнительный параметр</div>
+            
+            <div class="result" id="result">
+                <strong>Результаты расчета:</strong><br>
+                <div id="resultDetails"></div>
+                
+                <div class="network-info" id="networkInfo" style="display: none;">
+                    <strong>Информация о сети:</strong><br>
+                    <div id="networkDetails"></div>
+                </div>
+                
+                <div class="binary-representation" id="binaryRepresentation" style="display: none;">
+                    <strong>Двоичное представление:</strong><br>
+                    <div class="binary-row">
+                        <div class="binary-label">IP address:</div>
+                        <div class="binary-value" id="binaryIp"></div>
+                    </div>
+                    <div class="binary-row">
+                        <div class="binary-label">Net mask:</div>
+                        <div class="binary-value" id="binaryMask"></div>
+                    </div>
+                    <div class="binary-row">
+                        <div class="binary-label">Net address:</div>
+                        <div class="binary-value" id="binaryNet"></div>
+                    </div>
+                    <div class="binary-row">
+                        <div class="binary-label">Broadcast:</div>
+                        <div class="binary-value" id="binaryBroadcast"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Блок расчета подсетей -->
+        <div class="subnet-calc">
+            <h3>Расчёт подсетей: создание сети с 30 подсетями</h3>
+
+            <div class="image-container">
+            <!-- ВСТАВЬТЕ ВАШ SVG КОД ЗДЕСЬ -->
+                <img class="svg-image" src="../media/IPS.svg" alt="Карта сети">
+            </div>
+            
+            <div class="subnet-step">
+                <h4>Шаг 1: Определите общее количество необходимых хостов</h4>
+                <p>Это самый важный шаг. Вам нужно понять, сколько устройств (компьютеров, серверов, принтеров и т.д.) будет в каждой подсети. От этого зависит размер маски для каждой подсети.</p>
+                
+                <div class="calculation-example">
+                    <strong>Пример для 30 подсетей:</strong><br>
+                    Допустим, у нас есть следующие требования:<br>
+                    • 10 подсетей для филиалов: по 50 хостов в каждой<br>
+                    • 10 подсетей для отделов: по 20 хостов в каждой<br>
+                    • 10 подсетей для Wi-Fi сетей: по 5 хостов в каждой
+                </div>
+                
+                <div class="note">
+                    <strong>Важно:</strong> Количество хостов всегда считается как 2^n - 2, где n — количество нулевых битов в маске. Мы вычитаем 2 (адрес сети и широковещательный адрес), которые нельзя назначить устройствам.
+                </div>
+            </div>
+
+            <div class="subnet-step">
+                <h4>Шаг 2: Выберите частную IP-сеть</h4>
+                <p>Для такой задачи нам нужна достаточно большая сеть. Идеально подходит частная сеть 10.0.0.0/8 или 172.16.0.0/12, но для примера мы возьмем 192.168.0.0/16.</p>
+                
+                <div class="calculation-example">
+                    <strong>Исходная сеть:</strong> 192.168.0.0/16<br>
+                    <strong>Маска:</strong> 255.255.0.0<br>
+                    <strong>Доступные адреса:</strong> 65 534 (от 192.168.0.1 до 192.168.255.254)
+                </div>
+                
+                <p>Этого нам с избытком хватит.</p>
+            </div>
+
+            <div class="subnet-step">
+                <h4>Шаг 3: Проведём субнеттинг с помощью VLSM</h4>
+                <p>Теперь мы будем "нарезать" нашу большую сеть на маленькие, ориентируясь на требования к количеству хостов. Мы начнем с самых больших подсетей.</p>
+                
+                <h5>Группа A: Подсети по 50 хостов (нужно 10 штук)</h5>
+                <div class="calculation-example">
+                    <strong>Определим размер блока:</strong> 50 хостов + 2 (служебных) = 52<br>
+                    <strong>Ближайшая степень двойки:</strong> 64 (2^6). Значит, для хостов нам нужно 6 бит<br>
+                    <strong>Определим маску:</strong> 32 - 6 = 26 бит. Маска: /26 (255.255.255.192)<br>
+                    <strong>Размер блока:</strong> 2^6 = 64 адреса в каждой подсети
+                </div>
+                
+                <p><strong>Выделим первую подсеть для 10 групп разработчиков по 50 человек (192.168.0.0/16)</strong></p>
+                <div class="calculation-example">
+                    <strong>Подсеть 1:</strong> 192.168.0.0/26<br>
+                    • Адрес сети: 192.168.0.0<br>
+                    • Первый полезный: 192.168.0.1<br>
+                    • Последний полезный: 192.168.0.62<br>
+                    • Broadcast: 192.168.0.63<br><br>
+                    
+                    <strong>Подсеть 2:</strong> 192.168.0.64/26 (следующий блок после 0 + 64)<br>
+                    <strong>Подсеть 3:</strong> 192.168.0.128/26<br>
+                    <strong>Подсеть 4:</strong> 192.168.0.192/26<br>
+                    <strong>Подсеть 5:</strong> 192.168.1.0/26<br>
+                    <strong>Подсеть 6:</strong> 192.168.1.64/26<br>
+                    <strong>Подсеть 7:</strong> 192.168.1.128/26<br>
+                    <strong>Подсеть 8:</strong> 192.168.1.192/26<br>
+                    <strong>Подсеть 9:</strong> 192.168.2.0/26<br>
+                    <strong>Подсеть 10:</strong> 192.168.2.64/26 
+                </div>
+                <p>Мы выделили 10 подсетей для филиалов разработчиков.</p>
+
+                <h5>Группа B: Подсети по 20 хостов (нужно 10 штук)</h5>
+                <div class="calculation-example">
+                    <strong>Размер блока:</strong> 20 + 2 = 22<br>
+                    <strong>Ближайшая степень двойки:</strong> 32 (2^5). Нужно 5 бит для хостов<br>
+                    <strong>Маска:</strong> 32 - 5 = 27 (/27 или 255.255.255.224)<br>
+                    <strong>Размер блока:</strong> 2^5 = 32 адреса
+                </div>
+                
+                <p><strong>Выделяем из оставшегося пространства для 10 отделов по 20 человек:</strong></p>
+                <div class="calculation-example">
+                    <strong>Подсеть 11:</strong> 192.168.2.128/27<br>
+                    <strong>Подсеть 12:</strong> 192.168.2.160/27<br>
+                    <strong>Подсеть 13:</strong> 192.168.2.192/27<br>
+                    <strong>Подсеть 14:</strong> 192.168.2.224/27<br>
+                    <strong>Подсеть 15:</strong> 192.168.3.0/27<br>
+                    <strong>Подсеть 16:</strong> 192.168.3.32/27<br>
+                    <strong>Подсеть 17:</strong> 192.168.3.64/27<br>
+                    <strong>Подсеть 18:</strong> 192.168.3.96/27<br>
+                    <strong>Подсеть 19:</strong> 192.168.3.128/27<br>
+                    <strong>Подсеть 20:</strong> 192.168.3.160/27
+                </div>
+                <p>Мы выделили 10 подсетей для отделов.</p>
+
+                <h5>Группа C: Подсети по 5 хостов (нужно 10 штук)</h5>
+                <div class="calculation-example">
+                    <strong>Размер блока:</strong> 5 + 2 = 7<br>
+                    <strong>Ближайшая степень двойки:</strong> 8 (2^3). Нужно 3 бита для хостов<br>
+                    <strong>Маска:</strong> 32 - 3 = 29 (/29 или 255.255.255.248)<br>
+                    <strong>Размер блока:</strong> 2^3 = 8 адресов
+                </div>
+                
+                <p><strong>Выделяем из оставшегося пространства для 10 групп коворкингов по 5 человек:</strong></p>
+                <div class="calculation-example">
+                    <strong>Подсеть 21:</strong> 192.168.3.192/29<br>
+                    <strong>Подсеть 22:</strong> 192.168.3.200/29<br>
+                    <strong>Подсеть 23:</strong> 192.168.3.208/29<br>
+                    <strong>Подсеть 24:</strong> 192.168.3.216/29<br>
+                    <strong>Подсеть 25:</strong> 192.168.3.224/29<br>
+                    <strong>Подсеть 26:</strong> 192.168.3.232/29<br>
+                    <strong>Подсеть 27:</strong> 192.168.3.240/29<br>
+                    <strong>Подсеть 28:</strong> 192.168.3.248/29<br>
+                    <strong>Подсеть 29:</strong> 192.168.4.0/29<br>
+                    <strong>Подсеть 30:</strong> 192.168.4.8/29
+                </div>
+                </div>
+                <p>Мы выделили 10 подсетей для Wi-Fi - коворкингов.</p>
+            </div>
+
+            <div class="subnet-step">
+                <h4>Шаг 4: Сводная таблица (пример)</h4>
+                <table class="subnet-table">
+                    <thead>
+                        <tr>
+                            <th>№ Подсети</th>
+                            <th>Назначение</th>
+                            <th>Сеть</th>
+                            <th>Маска</th>
+                            <th>Первый IP</th>
+                            <th>Последний IP</th>
+                            <th>Broadcast</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>Разрабы. "Альфа"</td>
+                            <td>192.168.0.0</td>
+                            <td>255.255.255.192</td>
+                            <td>192.168.0.1</td>
+                            <td>192.168.0.62</td>
+                            <td>192.168.0.63</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>Разрабы. "Бетта"</td>
+                            <td>192.168.0.64</td>
+                            <td>255.255.255.192</td>
+                            <td>192.168.0.65</td>
+                            <td>192.168.0.126</td>
+                            <td>192.168.0.127</td>
+                        </tr>
+                        <tr>
+                            <td>...</td>
+                            <td>...</td>
+                            <td>...</td>
+                            <td>...</td>
+                            <td>...</td>
+                            <td>...</td>
+                            <td>...</td>
+                        </tr>
+                        <tr>
+                            <td>11</td>
+                            <td>"Продажники"</td>
+                            <td>192.168.2.128</td>
+                            <td>255.255.255.224</td>
+                            <td>192.168.2.129</td>
+                            <td>192.168.2.158</td>
+                            <td>192.168.2.159</td>
+                        </tr>
+                        <tr>
+                            <td>12</td>
+                            <td>"Бухгалтерия"</td>
+                            <td>192.168.2.160</td>
+                            <td>255.255.255.224</td>
+                            <td>192.168.2.161</td>
+                            <td>192.168.2.190</td>
+                            <td>192.168.2.191</td>
+                        </tr>
+                        <tr>
+                            <td>...</td>
+                            <td>...</td>
+                            <td>...</td>
+                            <td>...</td>
+                            <td>...</td>
+                            <td>...</td>
+                            <td>...</td>
+                        </tr>
+                        <tr>
+                            <td>21</td>
+                            <td>"Кафетерий"</td>
+                            <td>192.168.3.192</td>
+                            <td>255.255.255.248</td>
+                            <td>192.168.3.193</td>
+                            <td>192.168.3.198</td>
+                            <td>192.168.3.199</td>
+                        </tr>
+                        <tr>
+                            <td>22</td>
+                            <td>"Кафитерий 301"</td>
+                            <td>192.168.3.200</td>
+                            <td>255.255.255.248</td>
+                            <td>192.168.3.201</td>
+                            <td>192.168.3.206</td>
+                            <td>192.168.3.207</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="subnet-step">
+                <h4>Шаг 5: Практическая реализация</h4>
+                <ul>
+                    <li><strong>На маршрутизаторе:</strong> Вам нужно настроить интерфейсы (или виртуальные интерфейсы, SVIs) для каждой из этих подсетей, если маршрутизатор является их шлюзом по умолчанию.</li>
+                    <li><strong>На коммутаторах (L3):</strong> Если у вас есть управляемые коммутаторы, вы можете создать VLAN для каждой подсети и назначить им соответствующий IP-адрес (шлюз).</li>
+                    <li><strong>Настройка DHCP (опционально):</strong> Настройте DHCP-сервер для раздачи IP-адресов в нужном диапазоне для каждой подсети, исключая из выдачи адрес шлюза.</li>
+                    <li><strong>Межсетевая маршрутизация:</strong> Убедитесь, что маршрутизатор знает, как передавать трафик между этими подсетями (обычно это происходит автоматически для непосредственно подключенных сетей). Если у вас несколько маршрутизаторов, нужно настроить статические маршруты или динамический протокол маршрутизации (например, OSPF).</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Элементы управления
+        const checkboxes = {
+            ip: document.getElementById('ipCheckbox'),
+            mask: document.getElementById('maskCheckbox'),
+            net: document.getElementById('netCheckbox'),
+            broadcast: document.getElementById('broadcastCheckbox')
+        };
+
+        const rows = {
+            ip: document.getElementById('ipRow'),
+            mask: document.getElementById('maskRow'),
+            net: document.getElementById('netRow'),
+            broadcast: document.getElementById('broadcastRow')
+        };
+
+        const calculateBtn = document.getElementById('calculateBtn');
+        const selectedCount = document.getElementById('selectedCount');
+        const errorMsg = document.getElementById('errorMsg');
+        const binaryRepresentation = document.getElementById('binaryRepresentation');
+        const networkInfo = document.getElementById('networkInfo');
+
+        // IP всегда выбран и доступен для редактирования
+        updateFieldAccess('ip', true);
+
+        // Обработчики чекбоксов (кроме IP)
+        Object.entries(checkboxes).forEach(([key, checkbox]) => {
+            if (key !== 'ip') {
+                checkbox.addEventListener('change', function() {
+                    // Снимаем выделение с других чекбоксов
+                    if (this.checked) {
+                        Object.entries(checkboxes).forEach(([otherKey, otherCheckbox]) => {
+                            if (otherKey !== 'ip' && otherKey !== key) {
+                                otherCheckbox.checked = false;
+                                updateFieldAccess(otherKey, false);
+                                updateRowStyle(otherKey, false);
+                            }
+                        });
+                    }
+                    
+                    updateFieldAccess(key, this.checked);
+                    updateSelectedCount();
+                    updateCalculateButton();
+                    updateRowStyle(key, this.checked);
+                });
+            }
+        });
+
+        // Обновление доступности полей ввода
+        function updateFieldAccess(field, enabled) {
+            for (let i = 1; i <= 4; i++) {
+                const input = document.getElementById(`${field}${i}`);
+                if (field === 'ip') {
+                    input.readOnly = false;
+                } else {
+                    input.readOnly = !enabled;
+                    if (enabled) {
+                        input.placeholder = '';
+                    } else {
+                        input.value = '';
+                        // Устанавливаем плейсхолдеры по умолчанию
+                        // const placeholders = {
+                        //     mask: ['255', '255', '255', '0'],
+                        //     net: ['192', '168', '1', '0'],
+                        //     broadcast: ['192', '168', '1', '255']
+                        // };
+                        // input.placeholder = placeholders[field] ? placeholders[field][i-1] : '0';
+                    }
+                }
+            }
+        }
+
+        // Подсчет выбранных параметров
+        function updateSelectedCount() {
+            const selected = Object.values(checkboxes).filter(cb => cb.checked && cb !== checkboxes.ip).length;
+            if (selected === 1) {
+                selectedCount.textContent = 'Выбран IP адрес и один дополнительный параметр';
+                selectedCount.style.color = '#27ae60';
+            } else if (selected > 1) {
+                selectedCount.textContent = 'Выбрано слишком много параметров. Выберите только один дополнительный параметр';
+                selectedCount.style.color = '#e74c3c';
+            } else {
+                selectedCount.textContent = 'Выбран IP адрес. Выберите один дополнительный параметр';
+                selectedCount.style.color = '#3498db';
+            }
+        }
+
+        // Обновление стиля строки
+        function updateRowStyle(field, selected) {
+            if (selected) {
+                rows[field].classList.add('selected');
+            } else {
+                rows[field].classList.remove('selected');
+            }
+        }
+
+        // Обновление состояния кнопки расчета
+        function updateCalculateButton() {
+            const ipFilled = isValidIP(...collectIP('ip'));
+            const additionalSelected = Object.values(checkboxes).filter(cb => cb.checked && cb !== checkboxes.ip).length === 1;
+            calculateBtn.disabled = !(ipFilled && additionalSelected);
+        }
+
+        // Функция преобразования числа в двоичное представление (8 бит)
+        function toBinary8bit(number) {
+            return parseInt(number).toString(2).padStart(8, '0');
+        }
+
+        // Функция создания HTML для двоичного представления
+        function createBinaryHTML(values) {
+            const binaryValues = values.map(toBinary8bit);
+            return binaryValues.map(bin => `<span class="binary-octet">${bin}</span>`).join('');
+        }
+
+        // Основная функция расчета
+        document.getElementById('calculateBtn').addEventListener('click', function() {
+            // Собираем все поля
+            const fields = {
+                ip: collectIP('ip'),
+                mask: collectIP('mask'),
+                net: collectIP('net'),
+                broadcast: collectIP('broadcast')
+            };
+            
+            // Проверяем, что IP заполнен корректно
+            if (!isValidIP(...fields.ip)) {
+                errorMsg.textContent = 'Ошибка: некорректный IP адрес';
+                errorMsg.style.display = 'block';
+                document.getElementById('result').style.display = 'none';
+                return;
+            }
+            
+            // Определяем, какой дополнительный параметр выбран
+            let selectedAdditional = null;
+            for (const [key, checkbox] of Object.entries(checkboxes)) {
+                if (key !== 'ip' && checkbox.checked) {
+                    selectedAdditional = key;
+                    break;
+                }
+            }
+            
+            // Проверяем выбранный дополнительный параметр
+            if (!isValidIP(...fields[selectedAdditional])) {
+                errorMsg.textContent = `Ошибка: некорректный ${getFieldName(selectedAdditional)}`;
+                errorMsg.style.display = 'block';
+                document.getElementById('result').style.display = 'none';
+                return;
+            }
+            
+            if (selectedAdditional === 'mask' && !isValidMask(...fields.mask)) {
+                errorMsg.textContent = 'Ошибка: некорректная маска сети';
+                errorMsg.style.display = 'block';
+                document.getElementById('result').style.display = 'none';
+                return;
+            }
+            
+            errorMsg.style.display = 'none';
+            
+            // Определяем, какие параметры известны и вычисляем недостающие
+            let result;
+            if (selectedAdditional === 'mask') {
+                // Случай 1: IP + Mask -> Net + Broadcast
+                result = calculateFromIPAndMask(fields.ip, fields.mask);
+            } else if (selectedAdditional === 'net') {
+                // Случай 2: IP + Net -> Mask + Broadcast
+                result = calculateFromIPAndNet(fields.ip, fields.net);
+            } else if (selectedAdditional === 'broadcast') {
+                // Случай 3: IP + Broadcast -> Mask + Net
+                result = calculateFromIPAndBroadcast(fields.ip, fields.broadcast);
+            }
+            
+            // Заполняем результаты
+            if (result) {
+                const finalIP = fields.ip;
+                const finalMask = result.mask || fields.mask;
+                const finalNet = result.net || fields.net;
+                const finalBroadcast = result.broadcast || fields.broadcast;
+                
+                fillIP('mask', finalMask);
+                fillIP('net', finalNet);
+                fillIP('broadcast', finalBroadcast);
+                
+                // Рассчитываем дополнительную информацию о сети
+                const networkStats = calculateNetworkStats(finalMask);
+                
+                // Показываем результаты
+                const resultDetails = document.getElementById('resultDetails');
+                resultDetails.innerHTML = `
+                    IP address: ${finalIP.join('.')}<br>
+                    Net mask: ${finalMask.join('.')}<br>
+                    Net address: ${finalNet.join('.')}<br>
+                    Broadcast: ${finalBroadcast.join('.')}
+                `;
+                
+                // Показываем информацию о сети
+                const networkDetails = document.getElementById('networkDetails');
+                networkDetails.innerHTML = `
+
+                    Количество хостов в подсети: ${networkStats.hostsPerSubnet}<br>
+                    Длина маски сети: /${networkStats.maskLength}
+                `;
+                networkInfo.style.display = 'block';
+                
+                // Показываем двоичное представление
+                document.getElementById('binaryIp').innerHTML = createBinaryHTML(finalIP);
+                document.getElementById('binaryMask').innerHTML = createBinaryHTML(finalMask);
+                document.getElementById('binaryNet').innerHTML = createBinaryHTML(finalNet);
+                document.getElementById('binaryBroadcast').innerHTML = createBinaryHTML(finalBroadcast);
+                
+                binaryRepresentation.style.display = 'block';
+                document.getElementById('result').style.display = 'block';
+            }
+        });
+        
+        // Функция расчета статистики сети
+        function calculateNetworkStats(mask) {
+            const maskNum = mask.map(x => parseInt(x));
+            const maskBinary = (maskNum[0] << 24) + (maskNum[1] << 16) + (maskNum[2] << 8) + maskNum[3];
+            
+            // Подсчитываем биты маски
+            let maskBits = 0;
+            for (let i = 31; i >= 0; i--) {
+                if (((maskBinary >> i) & 1) === 1) {
+                    maskBits++;
+                } else {
+                    break;
+                }
+            }
+            
+            // Для упрощения считаем, что используется классовая адресация
+            let subnetBits = 0;
+            const firstOctet = maskNum[0];
+            
+            if (firstOctet >= 240) {
+                // Класс E /255.255.255.255
+                subnetBits = 0;
+            } else if (firstOctet >= 224) {
+                // Класс D / multicast
+                subnetBits = 0;
+            } else if (firstOctet >= 192) {
+                // Класс C - 24 бита сети, остальное для подсетей/хостов
+                subnetBits = maskBits - 24;
+            } else if (firstOctet >= 128) {
+                // Класс B - 16 бит сети
+                subnetBits = maskBits - 16;
+            } else {
+                // Класс A - 8 бит сети
+                subnetBits = maskBits - 8;
+            }
+            
+            const hostBits = 32 - maskBits;
+            const subnetCount = Math.pow(2, subnetBits);
+            const hostsPerSubnet = Math.pow(2, hostBits) - 2;
+            const totalHosts = subnetCount * hostsPerSubnet;
+            
+            return {
+                subnetCount: subnetCount >= 1 ? subnetCount : 1,
+                hostsPerSubnet: hostsPerSubnet >= 0 ? hostsPerSubnet : 0,
+                totalHosts: totalHosts >= 0 ? totalHosts : 0,
+                maskLength: maskBits
+            };
+        }
+        
+        // Вспомогательные функции
+        function getFieldName(key) {
+            const names = {
+                ip: 'IP address',
+                mask: 'Net mask',
+                net: 'Net address',
+                broadcast: 'Broadcast'
+            };
+            return names[key];
+        }
+        
+        function collectIP(prefix) {
+            return [
+                document.getElementById(prefix + '1').value || '0',
+                document.getElementById(prefix + '2').value || '0',
+                document.getElementById(prefix + '3').value || '0',
+                document.getElementById(prefix + '4').value || '0'
+            ];
+        }
+        
+        function fillIP(prefix, values) {
+            document.getElementById(prefix + '1').value = values[0];
+            document.getElementById(prefix + '2').value = values[1];
+            document.getElementById(prefix + '3').value = values[2];
+            document.getElementById(prefix + '4').value = values[3];
+        }
+        
+        function isValidIP(ip1, ip2, ip3, ip4) {
+            return ip1 >= 0 && ip1 <= 255 &&
+                   ip2 >= 0 && ip2 <= 255 &&
+                   ip3 >= 0 && ip3 <= 255 &&
+                   ip4 >= 0 && ip4 <= 255;
+        }
+        
+        function isValidMask(mask1, mask2, mask3, mask4) {
+            const maskBinary = (parseInt(mask1) << 24) + (parseInt(mask2) << 16) + (parseInt(mask3) << 8) + parseInt(mask4);
+            let foundZero = false;
+            
+            for (let i = 31; i >= 0; i--) {
+                const bit = (maskBinary >> i) & 1;
+                if (bit === 0) {
+                    foundZero = true;
+                } else if (foundZero) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        
+        // Функции расчета (остаются такими же)
+        function calculateFromIPAndMask(ip, mask) {
+            const ipNum = ip.map(x => parseInt(x));
+            const maskNum = mask.map(x => parseInt(x));
+            
+            const net = [
+                ipNum[0] & maskNum[0],
+                ipNum[1] & maskNum[1],
+                ipNum[2] & maskNum[2],
+                ipNum[3] & maskNum[3]
+            ];
+            
+            const broadcast = [
+                net[0] | (255 - maskNum[0]),
+                net[1] | (255 - maskNum[1]),
+                net[2] | (255 - maskNum[2]),
+                net[3] | (255 - maskNum[3])
+            ];
+            
+            return { net, broadcast };
+        }
+        
+        function calculateFromIPAndNet(ip, net) {
+            const ipNum = ip.map(x => parseInt(x));
+            const netNum = net.map(x => parseInt(x));
+            
+            const ipBinary = (ipNum[0] << 24) + (ipNum[1] << 16) + (ipNum[2] << 8) + ipNum[3];
+            const netBinary = (netNum[0] << 24) + (netNum[1] << 16) + (netNum[2] << 8) + netNum[3];
+            
+            let maskBinary = 0;
+            for (let i = 31; i >= 0; i--) {
+                const ipBit = (ipBinary >> i) & 1;
+                const netBit = (netBinary >> i) & 1;
+                
+                if (ipBit === netBit) {
+                    maskBinary |= (1 << i);
+                } else {
+                    break;
+                }
+            }
+            
+            const mask = [
+                (maskBinary >> 24) & 255,
+                (maskBinary >> 16) & 255,
+                (maskBinary >> 8) & 255,
+                maskBinary & 255
+            ];
+            
+            const broadcast = [
+                netNum[0] | (255 - mask[0]),
+                netNum[1] | (255 - mask[1]),
+                netNum[2] | (255 - mask[2]),
+                netNum[3] | (255 - mask[3])
+            ];
+            
+            return { mask, broadcast };
+        }
+        
+        function calculateFromIPAndBroadcast(ip, broadcast) {
+            const ipNum = ip.map(x => parseInt(x));
+            const broadcastNum = broadcast.map(x => parseInt(x));
+            
+            const ipBinary = (ipNum[0] << 24) + (ipNum[1] << 16) + (ipNum[2] << 8) + ipNum[3];
+            const broadcastBinary = (broadcastNum[0] << 24) + (broadcastNum[1] << 16) + (broadcastNum[2] << 8) + broadcastNum[3];
+            
+            let maskBinary = 0;
+            for (let i = 31; i >= 0; i--) {
+                const ipBit = (ipBinary >> i) & 1;
+                const broadcastBit = (broadcastBinary >> i) & 1;
+                
+                if (ipBit === broadcastBit) {
+                    maskBinary |= (1 << i);
+                } else {
+                    break;
+                }
+            }
+            
+            const mask = [
+                (maskBinary >> 24) & 255,
+                (maskBinary >> 16) & 255,
+                (maskBinary >> 8) & 255,
+                maskBinary & 255
+            ];
+            
+            const net = [
+                ipNum[0] & mask[0],
+                ipNum[1] & mask[1],
+                ipNum[2] & mask[2],
+                ipNum[3] & mask[3]
+            ];
+            
+            return { mask, net };
+        }
+        
+        // Автоматический переход между полями
+        document.querySelectorAll('.ip-field input').forEach(input => {
+            input.addEventListener('input', function() {
+                if (this.value > 255) this.value = 255;
+                if (this.value < 0) this.value = 0;
+                
+                if (this.value.length === 3 && this.nextElementSibling && this.nextElementSibling.tagName === 'INPUT') {
+                    this.nextElementSibling.focus();
+                }
+                
+                // Обновляем состояние кнопки при изменении IP
+                if (this.id.startsWith('ip')) {
+                    updateCalculateButton();
+                }
+            });
+        });
+        
+        // Инициализация
+        updateSelectedCount();
+        updateCalculateButton();
+    </script>
+</body>
+</html>

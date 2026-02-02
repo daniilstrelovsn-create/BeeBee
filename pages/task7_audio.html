@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тип #7. Дискретизация звуковых волн.</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .controls {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .slider-container {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="range"] {
+            width: 100%;
+            max-width: 400px;
+        }
+        .value-display {
+            display: inline-block;
+            margin-left: 10px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        .info-panel {
+            background-color: #e9ecef;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .charts-row {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .volume-info {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #d4edda;
+            border-radius: 5px;
+            border-left: 4px solid #28a745;
+        }
+        .volume-item {
+            margin: 8px 0;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .info-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 15px;
+        }
+        .basic-params {
+            margin-bottom: 15px;
+        }
+        .basic-params p {
+            margin: 8px 0;
+            font-size: 16px;
+        }
+                .memory-visualization {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+        }
+        .memory-grid-container {
+            margin: 15px 0;
+            overflow-x: auto;
+            max-width: 100%;
+            display: flex;
+            justify-content: center; /* Центрируем таблицу памяти */
+        }
+        .memory-grid {
+            display: block;
+            border: 2px solid #333;
+            line-height: 0;
+            width: max-content;
+        }
+        .memory-cell {
+            width: 20px;
+            height: 20px;
+            border: 1px solid #ccc;
+            display: inline-block;
+            text-align: center;
+            line-height: 20px;
+            font-size: 10px;
+            font-weight: bold;
+            background-color: #f8f9fa;
+        }
+        .memory-cell.one {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .memory-cell.zero {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        .memory-info {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+            text-align: center; /* Центрируем текст информации */
+        }
+        .table-info {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #333;
+            font-weight: bold;
+            text-align: center; /* Центрируем информацию о размере таблицы */
+        }
+        .image-formats {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+        }
+        .formats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .formats-table th {
+            background-color: #007bff;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        .formats-table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        .formats-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .formats-table tr:hover {
+            background-color: #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Тип #7. Дискретизация звуковых волн.</h1>
+        
+        <div class="controls">
+            <div class="slider-container">
+                <label for="frequencySlider">
+                    Частота дискретизации (V): 
+                    <span id="frequencyValue" class="value-display">50 Гц</span>
+                </label>
+                <input type="range" id="frequencySlider" min="1" max="100" step="1" value="50">
+            </div>
+            
+            <div class="slider-container">
+                <label for="bitsSlider">
+                    Количество бит (i): 
+                    <span id="bitsValue" class="value-display">4 бит</span>
+                </label>
+                <input type="range" id="bitsSlider" min="1" max="8" step="1" value="4">
+            </div>
+        </div>
+
+        <div class="charts-row">
+            <div class="chart-container">
+                <canvas id="soundWaveChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="discreteWaveChart"></canvas>
+            </div>
+        </div>
+
+        <div class="info-panel">
+            <h3>Расчетные параметры:</h3>
+            
+            <div class="basic-params">
+                <p>Глубина кодирования звука (N = 2<sup>i</sup>): <strong id="depthValue">16 уровней</strong></p>
+                <p>Период дискретизации: <strong id="periodValue">0.02 секунд</strong></p>
+            </div>
+
+            <div class="info-controls">
+                <div class="slider-container">
+                    <label for="channelsSlider">
+                        Количество каналов (Ch): 
+                        <span id="channelsValue" class="value-display">2 канала</span>
+                    </label>
+                    <input type="range" id="channelsSlider" min="1" max="8" step="1" value="2">
+                </div>
+
+                <div class="slider-container">
+                    <label for="timeSlider">
+                        Время записи (t): 
+                        <span id="timeValue" class="value-display">144 секунды</span>
+                    </label>
+                    <input type="range" id="timeSlider" min="1" max="500" step="1" value="144">
+                </div>
+            </div>
+            
+            <div class="volume-info">
+                <h4>Информационный объём (I = Ch × V × i × t):</h4>
+                <div class="volume-item" id="volumeBits">0 бит</div>
+                <div class="volume-item" id="volumeKB">0 КБайт</div>
+                <div class="volume-item" id="volumeMB">0 МБайт</div>
+            </div>
+        </div>
+
+        <div class="memory-visualization">
+            <h3>Визуальное представление хранения информации:</h3>
+            <div class="table-info">
+                Размер таблицы: R = V × i = <span id="tableSize">200</span> ячеек (40 столбцов)
+            </div>
+            <div class="memory-grid-container">
+                <div id="memoryGrid" class="memory-grid"></div>
+            </div>
+            <div class="memory-info">
+                <p>Каждая ячейка представляет 1 бит. Зеленые ячейки - 1, красные ячейки - 0.</p>
+                <p>Отображаются двоичные представления дискретных значений сигнала для одноканальной записи длительностью 1 секунда.</p>
+            </div>
+        </div>
+
+        <div class="audio-formats">
+            <h3>Часто используемые форматы звуковых файлов:</h3>
+            <table class="formats-table">
+                <thead>
+                    <tr>
+                        <th>Название</th>
+                        <th>Расширение</th>
+                        <th>Каналы</th>
+                        <th>Частота (Гц)</th>
+                        <th>Глубина (бит)</th>
+                        <th>Где используется</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>CD Audio</td>
+                        <td>.cda</td>
+                        <td>2 (стерео)</td>
+                        <td>44 100</td>
+                        <td>16</td>
+                        <td>Аудио-CD, высококачественное звучание</td>
+                    </tr>
+                    <tr>
+                        <td>WAV</td>
+                        <td>.wav</td>
+                        <td>1-8</td>
+                        <td>8 000 - 192 000</td>
+                        <td>8-32</td>
+                        <td>Профессиональная звукозапись, Windows</td>
+                    </tr>
+                    <tr>
+                        <td>MP3</td>
+                        <td>.mp3</td>
+                        <td>1-2</td>
+                        <td>16 000 - 48 000</td>
+                        <td>16</td>
+                        <td>Музыка, подкасты, сжатие с потерями</td>
+                    </tr>
+                    <tr>
+                        <td>AAC</td>
+                        <td>.aac, .m4a</td>
+                        <td>1-48</td>
+                        <td>8 000 - 96 000</td>
+                        <td>16-24</td>
+                        <td>Apple устройства, YouTube, streaming</td>
+                    </tr>
+                    <tr>
+                        <td>FLAC</td>
+                        <td>.flac</td>
+                        <td>1-8</td>
+                        <td>1 - 655 350</td>
+                        <td>4-32</td>
+                        <td>Архивирование, Hi-Res аудио, без потерь</td>
+                    </tr>
+                    <tr>
+                        <td>OGG Vorbis</td>
+                        <td>.ogg</td>
+                        <td>1-255</td>
+                        <td>8 000 - 192 000</td>
+                        <td>16-32</td>
+                        <td>Игры, открытые проекты, streaming</td>
+                    </tr>
+                    <tr>
+                        <td>Telephone</td>
+                        <td>-</td>
+                        <td>1 (моно)</td>
+                        <td>8 000</td>
+                        <td>8</td>
+                        <td>Телефонная связь, голосовые сообщения</td>
+                    </tr>
+                    <tr>
+                        <td>Voice Recording</td>
+                        <td>-</td>
+                        <td>1 (моно)</td>
+                        <td>11 025</td>
+                        <td>8</td>
+                        <td>Диктофоны, голосовые записи</td>
+                    </tr>
+                    <tr>
+                        <td>AM Radio</td>
+                        <td>-</td>
+                        <td>1 (моно)</td>
+                        <td>11 025</td>
+                        <td>8</td>
+                        <td>АМ радио, разговорные передачи</td>
+                    </tr>
+                    <tr>
+                        <td>FM Radio</td>
+                        <td>-</td>
+                        <td>2 (стерео)</td>
+                        <td>22 050</td>
+                        <td>16</td>
+                        <td>FM радио, музыкальные передачи</td>
+                    </tr>
+                    <tr>
+                        <td>DVD Audio</td>
+                        <td>-</td>
+                        <td>2-6</td>
+                        <td>48 000 - 192 000</td>
+                        <td>16-24</td>
+                        <td>DVD видео, высококачественный звук</td>
+                    </tr>
+                    <tr>
+                        <td>Blu-ray Audio</td>
+                        <td>-</td>
+                        <td>2-8</td>
+                        <td>48 000 - 192 000</td>
+                        <td>16-24</td>
+                        <td>Blu-ray, кинотеатральный звук</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+    </div>
+
+    <script>
+        // Ожидаем полной загрузки DOM
+        document.addEventListener('DOMContentLoaded', function() {
+            // Инициализация графиков
+            const ctx = document.getElementById('soundWaveChart').getContext('2d');
+            const discreteCtx = document.getElementById('discreteWaveChart').getContext('2d');
+            
+            // Элементы управления
+            const frequencySlider = document.getElementById('frequencySlider');
+            const bitsSlider = document.getElementById('bitsSlider');
+            const channelsSlider = document.getElementById('channelsSlider');
+            const timeSlider = document.getElementById('timeSlider');
+            const frequencyValue = document.getElementById('frequencyValue');
+            const bitsValue = document.getElementById('bitsValue');
+            const channelsValue = document.getElementById('channelsValue');
+            const timeValue = document.getElementById('timeValue');
+            const depthValue = document.getElementById('depthValue');
+            const periodValue = document.getElementById('periodValue');
+            const volumeBits = document.getElementById('volumeBits');
+            const volumeKB = document.getElementById('volumeKB');
+            const volumeMB = document.getElementById('volumeMB');
+            const memoryGrid = document.getElementById('memoryGrid');
+            const tableSize = document.getElementById('tableSize');
+
+            // Создаем кастомный плагин для рисования сетки
+            const customGridPlugin = {
+                id: 'customGrid',
+                afterDraw(chart) {
+                    const frequency = parseFloat(frequencySlider.value);
+                    const bits = parseInt(bitsSlider.value);
+                    const depth = Math.pow(2, bits);
+                    const xAxis = chart.scales.x;
+                    const yAxis = chart.scales.y;
+                    const ctx = chart.ctx;
+                    
+                    ctx.save();
+                    
+                    // Рисуем вертикальные линии (дискретизация по времени) - КРАСНЫЕ
+                    ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([]);
+                    ctx.beginPath();
+                    
+                    // Для частоты V Гц: линии в моменты времени 0, 1/(V-1), 2/(V-1), ..., 1
+                    for (let i = 0; i < frequency; i++) {
+                        const t = i / (frequency - 1);
+                        const x = xAxis.getPixelForValue(t);
+                        ctx.moveTo(x, yAxis.top);
+                        ctx.lineTo(x, yAxis.bottom);
+                    }
+                    ctx.stroke();
+                    
+                    // Рисуем горизонтальные линии (квантование по уровню) - СИНИЕ
+                    ctx.strokeStyle = 'rgba(0, 0, 255, 0.3)';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([]);
+                    ctx.beginPath();
+                    
+                    // Для глубины N: линии на уровнях 0, 80/(N-1), 2*80/(N-1), ..., 80
+                    for (let i = 0; i < depth; i++) {
+                        const level = i * 80 / (depth - 1);
+                        const y = yAxis.getPixelForValue(level);
+                        ctx.moveTo(xAxis.left, y);
+                        ctx.lineTo(xAxis.right, y);
+                    }
+                    ctx.stroke();
+                    
+                    ctx.restore();
+                }
+            };
+
+            let soundWaveChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: 'Исходный звуковой сигнал',
+                        data: [],
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 0,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            title: {
+                                display: true,
+                                text: 'Время (секунды)',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            },
+                            min: 0,
+                            max: 1,
+                            grid: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.1)',
+                                drawBorder: true
+                            },
+                            ticks: {
+                                display: true,
+                                stepSize: 0.1
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Уровень звука (Дб)',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            },
+                            min: 0,
+                            max: 80,
+                            grid: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.1)',
+                                drawBorder: true
+                            },
+                            ticks: {
+                                display: true,
+                                stepSize: 10
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    }
+                },
+                plugins: [customGridPlugin]
+            });
+
+            let discreteWaveChart = new Chart(discreteCtx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: 'Дискретизированный сигнал',
+                        data: [],
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        tension: 0,
+                        fill: true,
+                        pointRadius: 3,
+                        borderWidth: 2,
+                        stepped: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            title: {
+                                display: true,
+                                text: 'Время (секунды)',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            },
+                            min: 0,
+                            max: 1,
+                            grid: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.1)',
+                                drawBorder: true
+                            },
+                            ticks: {
+                                display: true,
+                                stepSize: 0.1
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Уровень звука (Дб)',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            },
+                            min: 0,
+                            max: 80,
+                            grid: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.1)',
+                                drawBorder: true
+                            },
+                            ticks: {
+                                display: true,
+                                stepSize: 10
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    }
+                },
+                plugins: [customGridPlugin]
+            });
+
+            // Функция для генерации звуковой волны
+            function generateSoundWave(frequency, timePoints) {
+                return timePoints.map(t => {
+                    // Комбинация нескольких синусоид для создания сложной формы волны
+                    const baseFreq = 2; // Основная частота
+                    return 40 + 30 * Math.sin(2 * Math.PI * baseFreq * t) + 
+                           10 * Math.sin(2 * Math.PI * baseFreq * 3 * t) + 
+                           5 * Math.sin(2 * Math.PI * baseFreq * 5 * t);
+                });
+            }
+
+            // Функция для дискретизации и квантования сигнала (ИСПРАВЛЕННАЯ)
+            function discretizeSignal(originalData, frequency, bits) {
+                const depth = Math.pow(2, bits);
+                const levelStep = 80 / (depth - 1);
+                const discreteData = [];
+                
+                // Дискретизация по времени - точки на красных линиях
+                for (let i = 0; i < frequency; i++) {
+                    const t = i / (frequency - 1);
+                    
+                    // Находим значение исходного сигнала в момент времени t
+                    const index = Math.round(t * (originalData.length - 1));
+                    let value = originalData[index];
+                    
+                    // Квантование по уровню - значения на синих линиях
+                    let level = Math.round(value / levelStep);
+                    level = Math.max(0, Math.min(level, depth - 1)); // Ограничиваем диапазон
+                    
+                    // Преобразуем уровень в значение Дб для графика
+                    const quantizedValue = level * levelStep;
+                    
+                    discreteData.push({ x: t, y: quantizedValue });
+                }
+                
+                // Добавляем ступенчатый эффект
+                const steppedData = [];
+                for (let i = 0; i < discreteData.length - 1; i++) {
+                    steppedData.push(discreteData[i]);
+                    steppedData.push({
+                        x: discreteData[i + 1].x,
+                        y: discreteData[i].y
+                    });
+                }
+                if (discreteData.length > 0) {
+                    steppedData.push(discreteData[discreteData.length - 1]);
+                }
+                
+                return steppedData;
+            }
+
+            // Функция для преобразования значения в двоичное представление
+            function valueToBinary(value, bits) {
+                const depth = Math.pow(2, bits);
+                const levelStep = 80 / (depth - 1);
+                let level = Math.round(value / levelStep);
+                level = Math.max(0, Math.min(level, depth - 1)); // Ограничиваем диапазон
+                
+                const binary = level.toString(2).padStart(bits, '0');
+                return binary;
+            }
+
+            // Функция для создания визуализации памяти
+            function createMemoryVisualization(discreteData, bits, frequency) {
+                // Вычисляем размер таблицы по формуле R = V × i
+                const totalCells = frequency * bits;
+                tableSize.textContent = totalCells;
+                
+                // Фиксированное количество столбцов - 32
+                const cellsPerRow = 32;
+                const rows = Math.ceil(totalCells / cellsPerRow);
+                
+                let html = '';
+                let cellIndex = 0;
+                
+                // Получаем двоичные представления всех значений
+                const binaryValues = [];
+                for (let i = 0; i < discreteData.length; i += 2) {
+                    const dataPoint = discreteData[i];
+                    const binary = valueToBinary(dataPoint.y, bits);
+                    // Разбиваем двоичное число на отдельные биты
+                    for (let j = 0; j < binary.length; j++) {
+                        binaryValues.push(binary[j]);
+                    }
+                }
+                
+                // Заполняем таблицу
+                for (let row = 0; row < rows; row++) {
+                    for (let col = 0; col < cellsPerRow; col++) {
+                        if (cellIndex < totalCells) {
+                            if (cellIndex < binaryValues.length) {
+                                const bit = binaryValues[cellIndex];
+                                const cellClass = bit === '1' ? 'one' : 'zero';
+                                html += `<div class="memory-cell ${cellClass}">${bit}</div>`;
+                            } else {
+                                // Если данные закончились, заполняем нулями
+                                html += `<div class="memory-cell zero">0</div>`;
+                            }
+                            cellIndex++;
+                        }
+                    }
+                    html += '<br>';
+                }
+                
+                memoryGrid.innerHTML = html;
+            }
+
+            // Функция расчета информационного объема (ИСПРАВЛЕННАЯ ФОРМУЛА)
+            function calculateVolume(channels, frequency, bits, time) {
+                // I = Ch × V × i × t (биты на отсчет, а не уровни!)
+                const bitsVolume = channels * frequency * bits * time;
+                const kbVolume = bitsVolume / (8 * 1024); // биты в килобайты
+                const mbVolume = kbVolume / 1024; // килобайты в мегабайты
+                
+                return {
+                    bits: bitsVolume,
+                    kb: kbVolume,
+                    mb: mbVolume
+                };
+            }
+
+            // Функция форматирования больших чисел
+            function formatNumber(num) {
+                return Intl.NumberFormat('ru-RU').format(num);
+            }
+
+            // Функция правильного склонения для секунд
+            function formatSeconds(seconds) {
+                if (seconds % 10 === 1 && seconds % 100 !== 11) {
+                    return seconds + ' секунда';
+                } else if ([2, 3, 4].includes(seconds % 10) && ![12, 13, 14].includes(seconds % 100)) {
+                    return seconds + ' секунды';
+                } else {
+                    return seconds + ' секунд';
+                }
+            }
+
+            // Функция обновления графиков
+            function updateChart() {
+                const frequency = parseFloat(frequencySlider.value);
+                const bits = parseInt(bitsSlider.value);
+                const channels = parseInt(channelsSlider.value);
+                const time = parseInt(timeSlider.value);
+                const depth = Math.pow(2, bits);
+                
+                // Обновление отображаемых значений
+                frequencyValue.textContent = frequency.toFixed(0) + ' Гц';
+                bitsValue.textContent = bits + ' бит';
+                channelsValue.textContent = channels + ' канал' + (channels > 1 ? 'а' : '');
+                timeValue.textContent = formatSeconds(time);
+                depthValue.textContent = depth;
+                periodValue.textContent = (1 / frequency).toFixed(3) + ' секунд';
+                
+                // Расчет информационного объема (ИСПРАВЛЕННАЯ ФОРМУЛА)
+                const volume = calculateVolume(channels, frequency, bits, time);
+                volumeBits.textContent = formatNumber(volume.bits) + ' бит';
+                volumeKB.textContent = volume.kb.toFixed(2) + ' КБайт';
+                volumeMB.textContent = volume.mb.toFixed(4) + ' МБайт';
+                
+                // Генерация данных для графиков
+                const timePoints = [];
+                const steps = 500;
+                
+                for (let i = 0; i <= steps; i++) {
+                    const t = i / steps;
+                    timePoints.push(t);
+                }
+                
+                const waveData = generateSoundWave(frequency, timePoints);
+                
+                // Обновление исходного графика
+                soundWaveChart.data.datasets[0].data = timePoints.map((t, index) => ({
+                    x: t,
+                    y: waveData[index]
+                }));
+                
+                // Обновление дискретизированного графика
+                const discreteData = discretizeSignal(waveData, frequency, bits);
+                discreteWaveChart.data.datasets[0].data = discreteData;
+                
+                // Создание визуализации памяти
+                createMemoryVisualization(discreteData, bits, frequency);
+                
+                // Обновление графиков
+                soundWaveChart.update();
+                discreteWaveChart.update();
+            }
+
+            // Обработчики событий
+            frequencySlider.addEventListener('input', updateChart);
+            bitsSlider.addEventListener('input', updateChart);
+            channelsSlider.addEventListener('input', updateChart);
+            timeSlider.addEventListener('input', updateChart);
+
+            // Инициализация
+            updateChart();
+        });
+    </script>
+</body>
+</html>

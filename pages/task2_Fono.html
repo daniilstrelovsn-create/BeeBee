@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тип #4. Двоичное дерево кодов.</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            line-height: 1.6;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: left;
+            margin-bottom: 30px;
+            margin-left: 0;
+        }
+        .image-container {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px dashed #dee2e6;
+            margin-top: 20px;
+            width: 1300px;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .svg-image {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        .info-panel {
+            background-color: #e9ecef;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        .info-panel h3 {
+            color: #2c3e50;
+            margin-top: 0;
+            text-align: left;
+        }
+        
+        /* Стили для нового блока */
+        .encoding-info {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+            text-align: left;
+        }
+        .encoding-info h3 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .encoding-form {
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .text-input {
+            width: 100%;
+            min-height: 100px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: vertical;
+            font-family: Arial, sans-serif;
+        }
+        .buttons-container {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .calculate-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: auto;
+            min-width: 220px;
+            transition: background-color 0.3s;
+            white-space: nowrap;
+            text-align: center;
+        }
+        .calculate-btn:hover {
+            background-color: #2980b9;
+        }
+        .reduce-btn {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: auto;
+            min-width: 180px;
+            transition: background-color 0.3s;
+            white-space: nowrap;
+            text-align: center;
+        }
+        .reduce-btn:hover {
+            background-color: #27ae60;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #2ecc71;
+            display: none;
+        }
+        
+        /* Стили для таблицы символов */
+        .symbols-table {
+            margin-top: 20px;
+            width: 100%;
+            border-collapse: collapse;
+            display: none;
+        }
+        .symbols-table th {
+            background-color: #2ecc71;
+            color: white;
+            padding: 10px;
+            text-align: left;
+        }
+        .symbols-table td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .symbols-table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .total-row {
+            background-color: #e8f4fd !important;
+            font-weight: bold;
+        }
+        .compression-info {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #e8f4fd;
+            border-radius: 5px;
+            border-left: 4px solid #2ecc71;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Тип #4. Двоичное дерево кодов.</h1>
+
+        <div class="image-container">
+            <!-- ВСТАВЬТЕ ВАШ SVG КОД ЗДЕСЬ -->
+            <img class="svg-image" src="../media/FONO.svg" alt="Двоичное дерево кодов">
+        </div>
+
+        <div class="info-panel">
+            <h3>Условие Фано:</h3>
+            <p>Основное требование к префиксным кодам в теории кодирования, которое гласит: никакое кодовое слово не может быть началом (префиксом) другого кодового слова. Это условие даёт возможность однозначного декодирования, например:</p>
+            <p>А - 01, Б - 100, В - 1100, Г - 101</p>
+            <p>01100100101110010101  -  АББГВГА</p>
+        </div>
+
+        <!-- Новый блок вместо "Примеры использования двоичных кодов" -->
+        <div class="encoding-info">
+            <h3>Зачем нужно использовать неравномерное кодирование:</h3>
+            <p>Неравномерное кодирование позволяет сократить общий объем данных за счет присвоения более коротких кодов часто встречающимся символам и более длинных - редким. Это особенно эффективно при кодировании текстов на естественных языках, где распределение частот символов неравномерно.</p>
+            
+            <div class="encoding-form">
+                <textarea class="text-input" placeholder="Введите текст на русском языке..."></textarea>
+                <div class="buttons-container">
+                    <button class="calculate-btn">Рассчитать информационный объём</button>
+                    <button class="reduce-btn">Уменьшить объём текста</button>
+                </div>
+                <div class="result" id="result"></div>
+                
+                <!-- Таблица символов -->
+                <table class="symbols-table" id="symbolsTable">
+                    <thead>
+                        <tr>
+                            <th>Символ</th>
+                            <th>Количество</th>
+                            <th>Код (согласно Фано)</th>
+                            <th>Вес символа (бит)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="symbolsTableBody">
+                        <!-- Данные будут добавлены через JavaScript -->
+                    </tbody>
+                </table>
+                
+                <!-- Блок с информацией о сжатии -->
+                <div class="compression-info" id="compressionInfo" style="display: none;">
+                    <!-- Информация о сжатии будет добавлена через JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.querySelector('.calculate-btn').addEventListener('click', function() {
+            const text = document.querySelector('.text-input').value;
+            const resultElement = document.getElementById('result');
+            
+            if (!text.trim()) {
+                resultElement.textContent = 'Пожалуйста, введите текст для расчета.';
+                resultElement.style.display = 'block';
+                resultElement.style.borderLeftColor = '#e74c3c';
+                return;
+            }
+            
+            // В кодировке ASCII каждый символ занимает 8 бит (1 байт)
+            const bits = text.length * 8;
+            const bytes = text.length;
+            
+            resultElement.innerHTML = `
+                <strong>Результат расчета:</strong><br>
+                Текст содержит ${text.length} символов.<br>
+                Информационный объем в кодировке ASCII: ${bits} бит (${bytes} байт).
+            `;
+            resultElement.style.display = 'block';
+            resultElement.style.borderLeftColor = '#3498db';
+        });
+
+        document.querySelector('.reduce-btn').addEventListener('click', function() {
+            const text = document.querySelector('.text-input').value;
+            const table = document.getElementById('symbolsTable');
+            const tableBody = document.getElementById('symbolsTableBody');
+            const compressionInfo = document.getElementById('compressionInfo');
+            
+            if (!text.trim()) {
+                alert('Пожалуйста, введите текст для анализа.');
+                return;
+            }
+            
+            // Очищаем таблицу
+            tableBody.innerHTML = '';
+            
+            // Считаем частоту символов
+            const frequency = {};
+            for (let char of text) {
+                frequency[char] = (frequency[char] || 0) + 1;
+            }
+            
+            // Сортируем символы по частоте (по убыванию)
+            const sortedChars = Object.keys(frequency).sort((a, b) => frequency[b] - frequency[a]);
+            
+            // Генерируем коды Фано
+            const codes = generateFanoCodes(sortedChars, frequency);
+            
+            // Рассчитываем вес уменьшенного сообщения
+            let compressedBits = 0;
+            for (let char of text) {
+                compressedBits += codes[char].length;
+            }
+            
+            // Рассчитываем исходный вес (ASCII)
+            const originalBits = text.length * 8;
+            
+            // Рассчитываем коэффициент сжатия
+            const compressionRatio = ((originalBits - compressedBits) / originalBits * 100).toFixed(2);
+            
+            // Заполняем таблицу
+            sortedChars.forEach(char => {
+                const row = document.createElement('tr');
+                
+                const charCell = document.createElement('td');
+                charCell.textContent = char === ' ' ? 'Пробел' : char;
+                
+                const countCell = document.createElement('td');
+                countCell.textContent = frequency[char];
+                
+                const codeCell = document.createElement('td');
+                codeCell.textContent = codes[char];
+                
+                const weightCell = document.createElement('td');
+                const charWeight = codes[char].length * frequency[char];
+                weightCell.textContent = `${charWeight} бит`;
+                
+                row.appendChild(charCell);
+                row.appendChild(countCell);
+                row.appendChild(codeCell);
+                row.appendChild(weightCell);
+                
+                tableBody.appendChild(row);
+            });
+            
+            // Добавляем строку с итоговым весом
+            const totalRow = document.createElement('tr');
+            totalRow.className = 'total-row';
+            
+            const totalCharCell = document.createElement('td');
+            totalCharCell.textContent = 'ВСЕГО:';
+            totalCharCell.colSpan = 3;
+            
+            const totalCodeCell = document.createElement('td');
+            totalCodeCell.textContent = `Вес уменьшенного сообщения: ${compressedBits} бит`;
+            
+            totalRow.appendChild(totalCharCell);
+            totalRow.appendChild(totalCodeCell);
+            tableBody.appendChild(totalRow);
+            
+            // Показываем таблицу
+            table.style.display = 'table';
+            
+            // Показываем информацию о сжатии
+            compressionInfo.innerHTML = `
+                <strong>Результаты сжатия:</strong><br>
+                Исходный размер (ASCII): ${originalBits} бит<br>
+                Размер после сжатия: ${compressedBits} бит<br>
+                Экономия: ${originalBits - compressedBits} бит (${compressionRatio}%)
+            `;
+            compressionInfo.style.display = 'block';
+        });
+
+        // Функция для генерации кодов Фано
+        function generateFanoCodes(chars, frequency) {
+            if (chars.length <= 1) {
+                const codes = {};
+                if (chars.length === 1) {
+                    codes[chars[0]] = '0';
+                }
+                return codes;
+            }
+            
+            // Находим точку разделения
+            let total = 0;
+            for (let char of chars) {
+                total += frequency[char];
+            }
+            
+            let sum = 0;
+            let splitIndex = 0;
+            for (let i = 0; i < chars.length; i++) {
+                sum += frequency[chars[i]];
+                if (sum >= total / 2) {
+                    splitIndex = i + 1;
+                    break;
+                }
+            }
+            
+            const leftChars = chars.slice(0, splitIndex);
+            const rightChars = chars.slice(splitIndex);
+            
+            const leftCodes = generateFanoCodes(leftChars, frequency);
+            const rightCodes = generateFanoCodes(rightChars, frequency);
+            
+            const codes = {};
+            for (let char in leftCodes) {
+                codes[char] = '0' + leftCodes[char];
+            }
+            for (let char in rightCodes) {
+                codes[char] = '1' + rightCodes[char];
+            }
+            
+            return codes;
+        }
+    </script>
+</body>
+</html>
